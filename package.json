@@ -19,7 +19,7 @@
     "main": "server.js",
     "repository": {
         "type": "git",
-        "url": "https://github.com/shi04565/Project2"
+        "url": "https://github.com/duhaoyuan1111/project3_RESTful_server"
     },
     "dependencies": {
         "express": "^4.17.1",
