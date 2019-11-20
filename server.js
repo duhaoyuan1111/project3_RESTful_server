@@ -38,16 +38,24 @@ app.get('/codes',(req,res)=>{
 		
 		if(req.query.code != null){
 			limit = req.query.code.split(",");
-		}else{
-			limit = [rows[0].code,rows[rows.length-1].code];
 		}
-		for(var i=0;i<rows.length;i++){
-			if(rows[i].code>= limit[0] && rows[i].code<=limit[1]){
+		if(req.query.code!=0&&req.query.code!=null){
+			for(var i=0;i<rows.length;i++){
+				for(var j=0; j<limit.length;j++){
+					if(rows[i].code == limit[j]){
+						var code = 'C'+rows[i].code;
+						object[code] = rows[i].incident_type;
+					}
+				}
+			}
+		}else{
+			for(var i=0;i<rows.length;i++){
 				var code = 'C'+rows[i].code;
 				object[code] = rows[i].incident_type;
+				
 			}
 		}
-		if(req.query.format == null){
+		if(req.query.format == null || req.query.format==0){
 			var sentJson = JSON.stringify(object,null,4);
 			res.type('json').send(sentJson);
 		}else{
@@ -74,16 +82,23 @@ app.get('/neighborhoods',(req,res)=>{
 		
 		if(req.query.id != null){
 			limit = req.query.id.split(",");
-		}else{
-			limit = [rows[0].neighborhood_number,rows[rows.length-1].neighborhood_number];
 		}
-		for(var i=0;i<rows.length;i++){
-			if(rows[i].neighborhood_number>= limit[0] && rows[i].neighborhood_number<=limit[1]){
+		if(req.query.id!=0&&req.query.id!=null){
+			for(var i=0;i<rows.length;i++){
+				for(var j=0; j<limit.length;j++){
+					if(rows[i].neighborhood_number == limit[j]){
+						var neighborhood_number = 'N'+rows[i].neighborhood_number;
+						object[neighborhood_number] = rows[i].neighborhood_name;
+					}
+				}
+			}
+		}else{
+			for(var i=0;i<rows.length;i++){
 				var neighborhood_number = 'N'+rows[i].neighborhood_number;
 				object[neighborhood_number] = rows[i].neighborhood_name;
 			}
 		}
-		if(req.query.format == null){
+		if(req.query.format == null || req.query.format==0){
 			var sentJson = JSON.stringify(object,null,4);
 			res.type('json').send(sentJson);
 		}else{
@@ -135,15 +150,15 @@ app.get('/incidents',(req,res)=>{
 		db.all("SELECT * FROM Incidents ORDER BY case_number",function(err,rows){
 			if(req.query.start_date !=null){
 				var time = req.query.start_date.split("-");
-				var T = Math.parseInt(time[2]+time[0]+time[1]);
+				var tt = parseInt(time[0]+time[1]+time[2]);
 				var object = {};
 				for(var i = 0; i<rows.length;i++){
 					var temp = {};
 					var timedate = rows[i].date_time.split("T");
 					var number = 'I'+rows[i].case_number;
 					var t = timedate[0].split("-");
-					var inputTime = Math.parseInt(t[0]+t[1]+t[2]);
-					if(T<=t){
+					var inputTime = parseInt(t[0]+t[1]+t[2]);
+					if(tt<=inputTime){
 						temp["date"] = timedate[0]; 
 						temp["time"] = timedate[1]; 
 						temp["code"] = rows[i].code;
@@ -153,22 +168,21 @@ app.get('/incidents',(req,res)=>{
 						temp["block"] = rows[i].block;
 						object[number] = temp;
 					}
-					
 				}
 				var answer = JSON.stringify(object,null,4);
 				res.type("json").send(answer);
 				
 			}else if(req.query.end_date !=null){
 				var time = req.query.end_date.split("-");
-				var T = Math.parseInt(time[2]+time[0]+time[1]);
+				var tt = parseInt(time[0]+time[1]+time[2]);
 				var object = {};
 				for(var i = 0; i<rows.length;i++){
 					var temp = {};
 					var timedate = rows[i].date_time.split("T");
 					var number = 'I'+rows[i].case_number;
 					var t = timedate[0].split("-");
-					var inputTime = Math.parseInt(t[0]+t[1]+t[2]);
-					if(T>=t){
+					var inputTime = parseInt(t[0]+t[1]+t[2]);
+					if(tt>=inputTime){
 						temp["date"] = timedate[0]; 
 						temp["time"] = timedate[1]; 
 						temp["code"] = rows[i].code;
@@ -184,11 +198,10 @@ app.get('/incidents',(req,res)=>{
 				res.type("json").send(answer);
 				
 			}else if(req.query.code !=null){
-				var limit = req.query.code.split(",");
-				var object = {};
-				for(var i = 0; i<rows.length;i++){
-					var temp = {};
-					if(rows[i].code>=limit[0] && rows[i].code<=limit[1]){
+				if (req.query.code == 0) {
+					var object = {};
+					for(var i = 0; i<rows.length;i++){
+						var temp = {};
 						var number = 'I'+rows[i].case_number;
 						var timedate = rows[i].date_time.split("T");
 						temp["date"] = timedate[0]; 
@@ -198,19 +211,36 @@ app.get('/incidents',(req,res)=>{
 						temp["police_grid"] = rows[i].police_grid;
 						temp["neighborhood_number"] = rows[i].neighborhood_number;
 						temp["block"] = rows[i].block;
-						object[number] = temp;	
+						object[number] = temp;
 					}
-
+				} else {
+					var limit = req.query.code.split(",");
+					var object = {};
+					for(var i = 0; i<rows.length;i++){
+						var temp = {};
+						for(var j = 0; j<limit.length; j++){
+							if(rows[i].code == limit[j]){
+								var number = 'I'+rows[i].case_number;
+								var timedate = rows[i].date_time.split("T");
+								temp["date"] = timedate[0]; 
+								temp["time"] = timedate[1]; 
+								temp["code"] = rows[i].code;
+								temp["incident"] = rows[i].incident;
+								temp["police_grid"] = rows[i].police_grid;
+								temp["neighborhood_number"] = rows[i].neighborhood_number;
+								temp["block"] = rows[i].block;
+								object[number] = temp;
+							}
+						}
+					}
 				}
 				var answer = JSON.stringify(object,null,4);
 				res.type("json").send(answer);
-				
 			}else if(req.query.grid!=null){
-				var limit = req.query.grid.split(",");
-				var object = {};
-				for(var i = 0; i<rows.length;i++){
-					var temp = {};
-					if(rows[i].police_grid>=limit[0] && rows[i].police_grid<=limit[1]){
+				if (req.query.grid == 0) {
+					var object = {};
+					for(var i = 0; i<rows.length;i++){
+						var temp = {};
 						var number = 'I'+rows[i].case_number;
 						var timedate = rows[i].date_time.split("T");
 						temp["date"] = timedate[0]; 
@@ -220,18 +250,59 @@ app.get('/incidents',(req,res)=>{
 						temp["police_grid"] = rows[i].police_grid;
 						temp["neighborhood_number"] = rows[i].neighborhood_number;
 						temp["block"] = rows[i].block;
-						object[number] = temp;	
+						object[number] = temp;
 					}
-
+				} else {
+					var limit = req.query.grid.split(",");
+					var object = {};
+					for(var i = 0; i<rows.length;i++){
+						var temp = {};
+						for(var j = 0; j<limit.length; j++){
+							if(rows[i].police_grid == limit[j]){
+								var number = 'I'+rows[i].case_number;
+								var timedate = rows[i].date_time.split("T");
+								temp["date"] = timedate[0]; 
+								temp["time"] = timedate[1]; 
+								temp["code"] = rows[i].code;
+								temp["incident"] = rows[i].incident;
+								temp["police_grid"] = rows[i].police_grid;
+								temp["neighborhood_number"] = rows[i].neighborhood_number;
+								temp["block"] = rows[i].block;
+								object[number] = temp;	
+							}
+						}
+					}
 				}
 				var answer = JSON.stringify(object,null,4);
 				res.type("json").send(answer);
 			}else if(req.query.id != null){
-				var limit = req.query.id.split(",");
-				var object = {};
-				for(var i = 0; i<rows.length;i++){
-					var temp = {};
-					if(rows[i].neighborhood_number>=limit[0] && rows[i].neighborhood_number<=limit[1]){
+				if(req.query.id!=0){
+					var limit = req.query.id.split(",");
+					var object = {};
+					for(var i = 0; i<rows.length;i++){
+						var temp = {};
+						for(var j=0;j<limit.length;j++){
+							if(rows[i].neighborhood_number==limit[j]){
+								var number = 'I'+rows[i].case_number;
+								var timedate = rows[i].date_time.split("T");
+								temp["date"] = timedate[0]; 
+								temp["time"] = timedate[1]; 
+								temp["code"] = rows[i].code;
+								temp["incident"] = rows[i].incident;
+								temp["police_grid"] = rows[i].police_grid;
+								temp["neighborhood_number"] = rows[i].neighborhood_number;
+								temp["block"] = rows[i].block;
+								object[number] = temp;	
+							}
+						}
+
+					}
+					var answer = JSON.stringify(object,null,4);
+					res.type("json").send(answer);
+				}else{
+					var object = {};
+					for(var i = 0; i<rows.length;i++){
+						var temp = {};
 						var number = 'I'+rows[i].case_number;
 						var timedate = rows[i].date_time.split("T");
 						temp["date"] = timedate[0]; 
@@ -242,35 +313,53 @@ app.get('/incidents',(req,res)=>{
 						temp["neighborhood_number"] = rows[i].neighborhood_number;
 						temp["block"] = rows[i].block;
 						object[number] = temp;	
-					}
 
+					}
+					var answer = JSON.stringify(object,null,4);
+					res.type("json").send(answer);
+					
 				}
-				var answer = JSON.stringify(object,null,4);
-				res.type("json").send(answer);
-				
-			}else if(req.query.format != null){
-				var xml = "";
-				for(var i = 0; i<rows.length;i++){
-					var xmlString = "";
-					var number = 'I'+rows[i].case_number;
-					var timedate = rows[i].date_time.split("T");
-					var date = timedate[0]; 
-					var time= timedate[1]; 
-					var code = rows[i].code;
-					var incident= rows[i].incident;
-					var police_grid= rows[i].police_grid;
-					var neighborhood_number= rows[i].neighborhood_number;
-					var block = rows[i].block;
-					block = block.split("&").join("&amp;");
-					xmlString = xmlString+"\n<date>"+date+"</date>\n"+"<time>"+time+"</time>\n"+"<code>"+code+"</code>\n"
-								+"<incident>"+incident+"</incident>\n"+"<police_grid>"+police_grid+"</police_grid>\n"+"<neighborhood_number>"+neighborhood_number+"</neighborhood_number>\n"
-								+"<block>"+block+"</block>\n";
-					xmlString = "<case_number>"+number+xmlString+"</case_number>\n";
-					xml = xml + xmlString;
+			}else if(req.query.format != null && req.query.format!=0){
+				if (req.query.format=='xml'){
+					var xml = "";
+					for(var i = 0; i<rows.length;i++){
+						var xmlString = "";
+						var number = 'I'+rows[i].case_number;
+						var timedate = rows[i].date_time.split("T");
+						var date = timedate[0]; 
+						var time= timedate[1]; 
+						var code = rows[i].code;
+						var incident= rows[i].incident;
+						var police_grid= rows[i].police_grid;
+						var neighborhood_number= rows[i].neighborhood_number;
+						var block = rows[i].block;
+						block = block.split("&").join("&amp;");
+						xmlString = xmlString+"\n<date>"+date+"</date>\n"+"<time>"+time+"</time>\n"+"<code>"+code+"</code>\n"
+									+"<incident>"+incident+"</incident>\n"+"<police_grid>"+police_grid+"</police_grid>\n"+"<neighborhood_number>"+neighborhood_number+"</neighborhood_number>\n"
+									+"<block>"+block+"</block>\n";
+						xmlString = "<case_number>"+number+xmlString+"</case_number>\n";
+						xml = xml + xmlString;
+					}
+					xml = '<?xml version="1.0" encoding="UTF-8"?>\n'+"<Incidents>\n"+xml+"</Incidents>";
+					res.type('xml').send(xml);
+				} else {
+					var object = {};
+					for(var i = 0; i<rows.length;i++){
+						var temp = {};
+						var number = 'I'+rows[i].case_number;
+						var timedate = rows[i].date_time.split("T");
+						temp["date"] = timedate[0]; 
+						temp["time"] = timedate[1]; 
+						temp["code"] = rows[i].code;
+						temp["incident"] = rows[i].incident;
+						temp["police_grid"] = rows[i].police_grid;
+						temp["neighborhood_number"] = rows[i].neighborhood_number;
+						temp["block"] = rows[i].block;
+						object[number] = temp;
+					}
+					var answer = JSON.stringify(object,null,4);
+					res.type("json").send(answer);
 				}
-				xml = '<?xml version="1.0" encoding="UTF-8"?>\n'+"<Incidents>\n"+xml+"</Incidents>";
-				//console.log(xml);
-				res.type('xml').send(xml);
 			}else{
 				var object = {};
 				for(var i = 0; i<rows.length;i++){
