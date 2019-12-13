@@ -21,7 +21,7 @@ var db = new sqlite3.Database(db_filename, (err) => {
     }
     else {
         console.log('Now connected to ' + db_filename);
-		    }
+	}
 });
 
 
@@ -148,7 +148,7 @@ app.get('/incidents',(req,res)=>{
 	}else{
 			
 		db.all("SELECT * FROM Incidents ORDER BY case_number",function(err,rows){
-			if(req.query.start_date !=null){
+			if(req.query.start_date !=null && req.query.end_date == ''){
 				var time = req.query.start_date.split("-");
 				var tt = parseInt(time[0]+time[1]+time[2]);
 				var object = {};
@@ -173,30 +173,56 @@ app.get('/incidents',(req,res)=>{
 				res.type("json").send(answer);
 				
 			}else if(req.query.end_date !=null){
-				var time = req.query.end_date.split("-");
-				var tt = parseInt(time[0]+time[1]+time[2]);
+				var timeend = req.query.end_date.split("-");
+				var endtt = parseInt(timeend[0]+timeend[1]+timeend[2]);
 				var object = {};
-				for(var i = 0; i<rows.length;i++){
-					var temp = {};
-					var timedate = rows[i].date_time.split("T");
-					var number = 'I'+rows[i].case_number;
-					var t = timedate[0].split("-");
-					var inputTime = parseInt(t[0]+t[1]+t[2]);
-					if(tt>=inputTime){
-						temp["date"] = timedate[0]; 
-						temp["time"] = timedate[1]; 
-						temp["code"] = rows[i].code;
-						temp["incident"] = rows[i].incident;
-						temp["police_grid"] = rows[i].police_grid;
-						temp["neighborhood_number"] = rows[i].neighborhood_number;
-						temp["block"] = rows[i].block;
-						object[number] = temp;
+				if(req.query.start_date !=null){
+					if(req.query.start_date ==''){
+						for(var i = 0; i<rows.length;i++){
+							var temp = {};
+							var timedate = rows[i].date_time.split("T");
+							var number = 'I'+rows[i].case_number;
+							var t = timedate[0].split("-");
+							var inputTime = parseInt(t[0]+t[1]+t[2]);
+							if(endtt>=inputTime){
+								temp["date"] = timedate[0]; 
+								temp["time"] = timedate[1]; 
+								temp["code"] = rows[i].code;
+								temp["incident"] = rows[i].incident;
+								temp["police_grid"] = rows[i].police_grid;
+								temp["neighborhood_number"] = rows[i].neighborhood_number;
+								temp["block"] = rows[i].block;
+								object[number] = temp;
+							}
+							
+						}
+						var answer = JSON.stringify(object,null,4);
+						res.type("json").send(answer);						
+					} else {
+						var time = req.query.start_date.split("-");
+						var tt = parseInt(time[0]+time[1]+time[2]);
+						
+						for(var i = 0; i<rows.length;i++){
+							var temp = {};
+							var timedate = rows[i].date_time.split("T");
+							var number = 'I'+rows[i].case_number;
+							var t = timedate[0].split("-");
+							var inputTime = parseInt(t[0]+t[1]+t[2]);
+							if(tt<=inputTime && inputTime<= endtt){
+								temp["date"] = timedate[0]; 
+								temp["time"] = timedate[1]; 
+								temp["code"] = rows[i].code;
+								temp["incident"] = rows[i].incident;
+								temp["police_grid"] = rows[i].police_grid;
+								temp["neighborhood_number"] = rows[i].neighborhood_number;
+								temp["block"] = rows[i].block;
+								object[number] = temp;
+							}
+						}
+						var answer = JSON.stringify(object,null,4);
+						res.type("json").send(answer);
 					}
-					
 				}
-				var answer = JSON.stringify(object,null,4);
-				res.type("json").send(answer);
-				
 			}else if(req.query.code !=null){
 				if (req.query.code == 0) {
 					var object = {};
