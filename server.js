@@ -6,13 +6,15 @@ var path = require('path')
 var express = require('express')
 var sqlite3 = require('sqlite3')
 var bodyParser = require('body-parser');
+var cors = require('cors');
 
 var public_dir = path.join(__dirname, 'public');
 var template_dir = path.join(__dirname, 'templates');
 var db_filename = path.join(__dirname, 'db', 'stpaul_crime.sqlite3');
 
+
 var app = express();
-var port = 8000;
+var port = parseInt(process.argv[2],10);
 
 // open usenergy.sqlite3 database
 var db = new sqlite3.Database(db_filename, (err) => {
@@ -25,6 +27,7 @@ var db = new sqlite3.Database(db_filename, (err) => {
 });
 
 
+app.use(cors());
 
 app.use(express.static(public_dir));
 app.use(bodyParser.urlencoded({extended:true}));
